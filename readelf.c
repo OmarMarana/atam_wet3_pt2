@@ -12783,10 +12783,32 @@ process_symbol_table (Filedata * filedata)
 	      strtab_size = strtab != NULL ? string_sec->sh_size : 0;
 	    }
 
+        unsigned long global_syms_num = 0;
 	  for (si = 0; si < num_syms; si++)
-	    print_dynamic_symbol (filedata, si, symtab, section,
+      {
+        print_dynamic_symbol (filedata, si, symtab, section,
 				  strtab, strtab_size);
+        
+        if(strcmp(get_symbol_binding (filedata, ELF_ST_BIND ((symtab + si)->st_info)), "GLOBAL") == 0)
+        {
+        	global_syms_num++;
+        }
+      }  // Omar was here
+	    
 
+    //
+    if(global_syms_num == 0)
+    {
+        printf("\nThere are no GLOBAL symbols in this file.\n");
+    }
+    else if(global_syms_num == 1)
+    {
+        printf("\nThere is 1 GLOBAL symbol in this file.\n");
+    }
+    else
+    {
+        printf("\nThere are %ld GLOBAL symbols in this file.\n",global_syms_num);
+    }
 	  free (symtab);
 	  if (strtab != filedata->string_table)
 	    free (strtab);

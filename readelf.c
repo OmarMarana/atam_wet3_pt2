@@ -678,6 +678,7 @@ print_symbol (signed int width, const char * symbol)
       num_printed = width;
     }
 
+    free(modded_sym);
   free ((void *) alloced_symbol);
   return num_printed;
 }

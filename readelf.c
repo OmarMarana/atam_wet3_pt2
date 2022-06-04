@@ -6928,7 +6928,7 @@ process_section_headers (Filedata * filedata)
 	printf ("%s\n      ", printable_section_name (filedata, section));
       else
       {
-            if(section->sh_type != SHT_NULL && !do_section_details && !do_header && !do_segments)
+            if(section->sh_type != SHT_NULL && do_sections)
             {
               print_symbol2 (-17, SECTION_NAME_PRINT (section));
             }

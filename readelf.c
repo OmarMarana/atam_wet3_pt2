@@ -12797,21 +12797,20 @@ process_symbol_table (Filedata * filedata)
 	    
 
     //
-    if(section->sh_type == SHT_SYMTAB)
+
+    if(global_syms_num == 0)
     {
-        if(global_syms_num == 0)
-        {
-            printf("\nThere are no GLOBAL symbols in this file.\n");
-        }
-        else if(global_syms_num == 1)
-        {
-            printf("\nThere is 1 GLOBAL symbol in this file.\n");
-        }
-        else
-        {
-            printf("\nThere are %ld GLOBAL symbols in this file.\n",global_syms_num);
-        }
+        printf("\nThere are no GLOBAL symbols in this file.\n");
     }
+    else if(global_syms_num == 1)
+    {
+        printf("\nThere is 1 GLOBAL symbol in this file.\n");
+    }
+    else
+    {
+        printf("\nThere are %ld GLOBAL symbols in this file.\n",global_syms_num);
+    }
+    
 	  free (symtab);
 	  if (strtab != filedata->string_table)
 	    free (strtab);

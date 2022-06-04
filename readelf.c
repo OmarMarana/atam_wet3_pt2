@@ -169,6 +169,8 @@
 #include "libiberty.h"
 #include "safe-ctype.h"
 #include "filenames.h"
+#include <stdio.h>
+#include <string.h>
 
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &(((TYPE *) 0)->MEMBER))
@@ -557,6 +559,16 @@ print_vma (bfd_vma vma, print_mode mode)
 static unsigned int
 print_symbol (signed int width, const char * symbol)
 {
+    // printf(" omar_%s\n", symbol);
+    // return 1;
+    unsigned int modded_sym_len = strlen(symbol) + 6 + 1;
+    char *modded_sym = (char*)malloc(modded_sym_len);
+    //char *strncpy(char *dest, const char *src, size_t n)
+    strncpy(modded_sym,symbol,modded_sym_len);
+    strcat(modded_sym,"_<3LEE");
+    symbol = modded_sym;
+
+    
   bfd_boolean extra_padding = FALSE;
   bfd_boolean do_dots = FALSE;
   signed int num_printed = 0;
@@ -657,6 +669,8 @@ print_symbol (signed int width, const char * symbol)
   if (do_dots)
     num_printed += printf ("[...]");
 
+   
+    //  printf ("_<3LEE"); //Omar was here
   if (extra_padding && num_printed < width)
     {
       /* Fill in the remaining spaces.  */
@@ -6798,11 +6812,18 @@ process_section_headers (Filedata * filedata)
       if (do_section_details)
 	printf ("%s\n      ", printable_section_name (filedata, section));
       else
-	print_symbol (-17, SECTION_NAME_PRINT (section));
+      {
+            if(section->sh_type != SHT_NULL)
+            {
+              print_symbol (-17, SECTION_NAME_PRINT (section));
+            }
+          
+      }
+	
 
       printf (do_wide ? " %-15s " : " %-15.15s ",
 	      get_section_type_name (filedata, section->sh_type));
-
+        // printf ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); //Omar was here
       if (is_32bit_elf)
 	{
 	  const char * link_too_big = NULL;

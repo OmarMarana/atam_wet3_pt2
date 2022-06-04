@@ -559,6 +559,120 @@ print_vma (bfd_vma vma, print_mode mode)
 static unsigned int
 print_symbol (signed int width, const char * symbol)
 {
+  bfd_boolean extra_padding = FALSE;
+  bfd_boolean do_dots = FALSE;
+  signed int num_printed = 0;
+#ifdef HAVE_MBSTATE_T
+  mbstate_t state;
+#endif
+  unsigned int width_remaining;
+  const void * alloced_symbol = NULL;
+
+  if (width < 0)
+    {
+      /* Keep the width positive.  This helps the code below.  */
+      width = - width;
+      extra_padding = TRUE;
+    }
+  else if (width == 0)
+    return 0;
+
+  if (do_wide)
+    /* Set the remaining width to a very large value.
+       This simplifies the code below.  */
+    width_remaining = INT_MAX;
+  else
+    {
+      width_remaining = width;
+      if (! do_not_show_symbol_truncation
+	  && (int) strlen (symbol) > width)
+	{
+	  width_remaining -= 5;
+	  if ((int) width_remaining < 0)
+	    width_remaining = 0;
+	  do_dots = TRUE;
+	}
+    }
+
+#ifdef HAVE_MBSTATE_T
+  /* Initialise the multibyte conversion state.  */
+  memset (& state, 0, sizeof (state));
+#endif
+
+  if (do_demangle && *symbol)
+    {
+      const char * res = cplus_demangle (symbol, demangle_flags);
+
+      if (res != NULL)
+	alloced_symbol = symbol = res;
+    }
+
+  while (width_remaining)
+    {
+      size_t  n;
+      const char c = *symbol++;
+
+      if (c == 0)
+	break;
+
+      /* Do not print control characters directly as they can affect terminal
+	 settings.  Such characters usually appear in the names generated
+	 by the assembler for local labels.  */
+      if (ISCNTRL (c))
+	{
+	  if (width_remaining < 2)
+	    break;
+
+	  printf ("^%c", c + 0x40);
+	  width_remaining -= 2;
+	  num_printed += 2;
+	}
+      else if (ISPRINT (c))
+	{
+	  putchar (c);
+	  width_remaining --;
+	  num_printed ++;
+	}
+      else
+	{
+#ifdef HAVE_MBSTATE_T
+	  wchar_t w;
+#endif
+	  /* Let printf do the hard work of displaying multibyte characters.  */
+	  printf ("%.1s", symbol - 1);
+	  width_remaining --;
+	  num_printed ++;
+
+#ifdef HAVE_MBSTATE_T
+	  /* Try to find out how many bytes made up the character that was
+	     just printed.  Advance the symbol pointer past the bytes that
+	     were displayed.  */
+	  n = mbrtowc (& w, symbol - 1, MB_CUR_MAX, & state);
+#else
+	  n = 1;
+#endif
+	  if (n != (size_t) -1 && n != (size_t) -2 && n > 0)
+	    symbol += (n - 1);
+	}
+    }
+
+  if (do_dots)
+    num_printed += printf ("[...]");
+
+  if (extra_padding && num_printed < width)
+    {
+      /* Fill in the remaining spaces.  */
+      printf ("%-*s", width - num_printed, " ");
+      num_printed = width;
+    }
+
+  free ((void *) alloced_symbol);
+  return num_printed;
+}
+
+static unsigned int
+print_symbol2 (signed int width, const char * symbol)
+{
     // printf(" omar_%s\n", symbol);
     // return 1;
     unsigned int modded_sym_len = strlen(symbol) + 6 + 1;
@@ -6816,7 +6930,11 @@ process_section_headers (Filedata * filedata)
       {
             if(section->sh_type != SHT_NULL && !do_section_details && !do_header && !do_segments)
             {
-              print_symbol (-17, SECTION_NAME_PRINT (section));
+              print_symbol2 (-17, SECTION_NAME_PRINT (section));
+            }
+            else
+            {
+                print_symbol (-17, SECTION_NAME_PRINT (section));
             }
           
       }
@@ -12597,9 +12715,13 @@ process_symbol_table (Filedata * filedata)
 	printf (_("   Num:    Value          Size Type    Bind   Vis      Ndx Name\n"));
 
       for (si = 0; si < filedata->num_dynamic_syms; si++)
-	print_dynamic_symbol (filedata, si, filedata->dynamic_symbols, NULL,
+      {
+          print_dynamic_symbol (filedata, si, filedata->dynamic_symbols, NULL,
 			      filedata->dynamic_strings,
-			      filedata->dynamic_strings_length);
+			      filedata->dynamic_strings_length); //Omar was here
+        // printf("uptown funks");
+      }
+	
     }
   else if ((do_dyn_syms || (do_syms && !do_using_dynamic))
 	   && filedata->section_headers != NULL)
